@@ -1,0 +1,47 @@
+1. What is dimension
+Dimension table -> attributes of an entity(user_id,user favorite food, user birthday)
+- identify dimension of an entity -> make an entity unique => like user id
+- Other are attribute, come in 2 flavors: slowly-changing dim attribute(favorite food -> change in time, like from history -> future) and fixed dimension attribute like birthday, manufacturer of a phone
+2. Know your consumer
+- DA/DS: easy to query, not have complex data type
+- DE: compact, harder to query, nested type is oke
+- ML model: depend on the model and how it trained
+- Customer: easiest to interpret chart
+3. OLAP vs OLTP vs master data
+- OLTP: online transaction processing, low latency, low volume queries, optimize for write 1 record and join between tables, normalization
+- OLAP: online analytical processing, large volume, optimize for group by queries,minimizes JOINs
+- Master data: comleteness of entity definitions, deduped
+OLAP and OLTP is a continuum
+Production DB snapshot(OLTP) -> master data -> OLAP cubes -> metrics
+ 4. Cummulative table design
+- 2 dataframes (yesterday and today)
+- full outer join the 2 df together
+- coalesce value to keep everything around
+- hang onto all of history
++ usages: growth analytics at FB(dim_all_users)
++ State transition tracking
+5. Pros and cons of cumm table
+- Pros: historical analysis without shuffle
+- easy transition analysis
+Cons:
+- only be backfilled sequantially
+- handling pii can be a mess since delte/inactavie users get carried forward
+6. Compactness and usablility tradeoff
+- most usable tables: no complex data type, easy to group by and whre
+- most compact table: compress to be as small as possible and can’t be directed query until decompress
+- middle-ground: uing complex data types like ARRAY,STRUCT,MAP, making querying trickier but also compacting more
+7. Use case to use compace,usability or middle-ground
+- Most compact:OLTP system, consumer are highly technical
+- Middle ground: staging and master data
+- Most usable: OLAP system, majority less technical
+8. Struct, array and map
+- struct: table in a table, compression is good
+- map:key are loosely defined, compression is okey, all values are the same type
+- array:ordinal, list of values must have the save type
+9. Temporal cardinality exlplosion of dimentsion
+- Has 6M listings
+- has to know pricing of each night in next year => 365 * 6M = 2B night
+- Listing level with an array of nights
+- listing level with 2B rows
+=> if sorting right => parquet keep two about same size
+10. badness of denormalized explosion
