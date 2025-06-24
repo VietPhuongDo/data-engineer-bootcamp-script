@@ -1,0 +1,78 @@
+**Concept:** 
+
+**SCD mean slowly changing dimension, like your birthday never change - type 0 and your favorite food is change along time**
+
+**⇒ technique to track changes in dimensional data**
+
+**Idempotency: running an operation 100 times and 1 times will only have same value(regardless of the day u run, how many times and how much hour use run it)**
+
+**⇒ 1st run → expect result, 2nd,3rd,nth run not have any additional change**
+
+**Why troubleshoot non-idempotent pipelines is hard**
+
+- silent failure
+- only see it when data inconsistency and data analyst yell u ⇒ why data look weird and the number is nut match
+
+**What can make a pipeline not idempotent**
+
+- insert into without truncate ⇒ use MERGE or INSERT OVERWRITE every time please
+- Using start_date > without a corresponding end_date < ⇒ alway put a filter no make every fixed window
+- Not using a full set of partition sensor(pipeline might run when there is no/partial data) ⇒ not have enough input for operation
+- Not using  **depend_on_past**  for cumulative pipeline ⇒ it mean yesterday must run -> today can run, if yesterday cant run today cant run(**MUST HAVE HISTORY DATA)**
+
+**The pain of not having idempotent pipelines**
+
+- Backfilling cause inconsistencies between old and new data
+- hard to troubleshoot bugs
+- unit test cannot replicate  the production behavior
+- silent failures
+
+**Should u model as SCDg**
+
+⇒ New practice: when create a table have a snapshot partition column → when insert into, insert all data from staging and add the date params ⇒ easier on tracking data and not care to much to filter start_date and end_date 
+
+- Can be all dimension attribute can be SCD, rapidly like heart rate, middle like favorite food and very long time to change like your wife =))
+- A creator of Airflow hate SCD → he say SCD’s suck ⇒ functional data engineering
+
+The author say how to model your dimension
+
+- Latest snapshot, using the latest data ⇒ item can be not itempotent and if the data fail in today, from tomorrow to future is a death
+- Partition snapshot and use partition snapshot like daily/monthly/yearly column in database(You want a balance of performance, simplicity, and historical accuracy. Best for data warehouses.)
+- SCD - it helps you compress history when changes happen infrequently - easy to compression in long time to change
+
+Why do dimensions change?
+
+- Someone decide to use Iphone from history → hate Iphone and change to android
+- migrate from data engineer to data analyst
+- migrate from USA to vietnam
+
+How can u model dimensions that change
+
+- Singular snapshot: using latest snap shot ⇒ too bad, never use(**not idempotent**)
+- Daily partition snapshots - **idempotent**
+- SCD type 1,2,3 - **idempotent**
+
+More detail about SCD:
+
+- Type 0 - never change: your birthday ⇒ **purely idempotent**
+- Type 1 - Overwrite the history value(keep the latest value → make pipeline not idempotent) - use for OLTP not OLAP
+- Type 2 - care about value ‘start_date’ and ‘end_date’ → keep all history value
+
+current value will be have end_date is NULL
+
+difficult to use if have 1 more row per dimension
+
+⇒ **purely idempotent**
+
+- Type 3: hold on “original” and “current” value ⇒ have a column at time created value, and now value and updated_last_time, so lose the chain of history to current ⇒ **partially idempotent**
+
+**SCD 2 Loading Strategies**
+
+Load entire history in 1 query
+
+- Inefficient but nimble
+    
+    Incrementally load the data after the previous SCD is generated
+    
+- Has the same “depends_on_past” constraint
+- efficient but cumbersome
