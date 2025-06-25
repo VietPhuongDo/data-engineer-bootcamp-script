@@ -12,7 +12,7 @@ create table player_scd(
 );
 
 -----------full load from history----------
-insert into player_scd
+-- insert into player_scd
 with with_previous as(
   select player_name,
          current_season,
@@ -119,8 +119,6 @@ with last_season_scd as(
         on ts.player_name = ls.player_name
         where ls.player_name is null
     )
-
-
 select * from historical_scd -- keep history data from 2021 to previous
 union all
 select * from unchanged_record --record for player in 2021 but not change in 2022,only insert new with end_season = 2022
