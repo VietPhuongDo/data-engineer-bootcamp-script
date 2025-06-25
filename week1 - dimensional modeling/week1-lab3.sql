@@ -83,6 +83,3 @@ select
 from deduped_teams
 where row_num = 1;
 
-select type,count(1)
-from vertices
-group by type ;
