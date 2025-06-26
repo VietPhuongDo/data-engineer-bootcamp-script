@@ -3,9 +3,9 @@ create type season_stats as(
     gp Integer,
     pts REAL,
     reb REAL,
-    ast REAL)
+    ast REAL);
 
-create type scoring_class as enum('star','good','average','bad')
+create type scoring_class as enum('star','good','average','bad');
 
 create table players(
     player_name text,
